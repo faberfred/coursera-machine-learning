@@ -63,50 +63,59 @@ Theta2_grad = zeros(size(Theta2));
 %
 
 % add the bias column to the input matrix X
-X = [ones(size(X, 1), 1) X];
-X_origin = X(:, 2:end);
+X_plus_bias_one = [ones(size(X, 1), 1) X];
 
 % calculate the activation values for the hidden layer  
-Hidden_1 = sigmoid(X * Theta1'); 
+Hidden_1 = sigmoid(X_plus_bias_one * Theta1'); 
 
-% add the bias column to the hidden layer 1
+% add the bias column to the hidden layer
 Hidden_1 = [ones(size(Hidden_1, 1), 1) Hidden_1];
 
 % calculate the activation values for the output layer
 Output = sigmoid(Hidden_1 * Theta2'); % size of the output layer within this example = 5000 x 10 matrix
 
+% init y_temp of size 5000 x 10
 y_temp = zeros(size(Output)); % size of y_temp within this example = 5000 x 10 matrix
 
+% transfer the label values of value 1 to 10 into logical arrays / vectors of site 1 x 10:
+% value 1 will be transfered into the vector [1 0 0 0 0 0 0 0 0 0]
+% value 2 will be transfered into the vector [0 1 0 0 0 0 0 0 0 0]
+% value 3 will be transfered into the vector [0 0 1 0 0 0 0 0 0 0]
+...
+% value 10 will be transfered into the vector [0 0 0 0 0 0 0 0 0 1]
 for i = 1:size(y, 1)
   y_temp(i, y(i)) = 1;
 end;
-%disp(y_temp(1:10, :));
 
-% calculate the error for each impot example.
+
+% calculate the error (log loss function) for each of the (5000) input examples:
+% the output is an array / a vectot of size 1 x 10. This vector will be compared with the label vector
+% finally the resulting vector again of size 1 x 10 will be summed up to get one value for each of the 5000 examples. 
 K_sum = sum((-y_temp .* log(Output) - (1 - y_temp) .* log(1 - Output)), 2);  
 %K_sum = sum(-y_temp .* log(sigmoid(Hidden_1 * Theta2')) - (1 - y_temp) .* log(1 - sigmoid(Hidden_1* Theta2')));
 
 
-% get rid of the bis column within Theta1 and Theta2
+%============ calculate the regularization term ============
+
+% get rid of the bias column within Theta1 and Theta2
 Theta1_origin = Theta1(:, 2:end);
 Theta2_origin = Theta2(:, 2:end);
 
-% sqare all elements within Theta1 and Theta2
+% sqare all elements within Theta1 and Theta2 (without the bias column)
 Theta1_sq = Theta1_origin.^2;
 Theta2_sq = Theta2_origin.^2;
 
-% sum the first and second dimension of the squared theta matrices 
-Theta1_sum = sum(sum(Theta1_sq));
-Theta2_sum = sum(sum(Theta2_sq));
+% sum the first and second dimension of the theta matrices with the squared elements
+Theta1_sum = sum(sum(Theta1_sq, 2));
+Theta2_sum = sum(sum(Theta2_sq, 2));
 
 % calculate the regulerazation value
 reg_value = (lambda * (Theta1_sum + Theta2_sum)) / (2 * m);
 
-% return the calculated cost value
+% return the calculated cost value summed up over all the input elements (5000 elements in our example)
 J = (sum(K_sum) / m) + reg_value;
 
-% -------------------------------------------------------------
-% backpropagation part:
+%============== backpropagation part ===========================
 
 %delta_3 = zeros(m, num_labels);
 %delta_2 = zeros(m, hidden_layer_size);
@@ -114,48 +123,41 @@ J = (sum(K_sum) / m) + reg_value;
 Delta1 = zeros(hidden_layer_size, input_layer_size+1);
 Delta2 = zeros(num_labels, hidden_layer_size+1);
 
-%disp(size(delta_out));
-
+% calculate the gradient for each input example within a for loop
 for i = 1:m
   % calculate the activation values for the hidden layer
-  z_2 = X(i, :) * Theta1';
+  z_2 = X_plus_bias_one(i, :) * Theta1';
   Hidden_layer = sigmoid(z_2); 
-  %disp(size(Hidden_layer)); 
  
   % add the bias column to the hidden layer
   Hidden_layer_bias = [ones(size(Hidden_layer, 1), 1) Hidden_layer];
-  %disp(size(Hidden_layer)); 
   
   % calculate the activation values for the output layer
   z_3 = Hidden_layer_bias * Theta2';
   Output_layer = sigmoid(z_3);
-  %disp(Output_layer);
-  %disp(y_temp(i, :));
   
+  % calculete the delta value for the output layer
   delta_3 = Output_layer - y_temp(i, :);
   % delta_3(i, :) = Output_layer - y_temp(i, :);
-  %disp(delta_3(i, :));
   
+  % calculate the delta value for the hidden layer
   delta_2 = (delta_3 * Theta2_origin) .* sigmoidGradient(z_2);
   %delta_2(i, :) = (delta_3(i, :) * Theta2_origin) .* sigmoidGradient(z_2);
-  %disp(size(X_origin(i, :)));
-  %disp(size(delta_2' * X_origin(i, :)));
   
-  %Delta1 = Delta1 .+ (delta_2' * X_origin(i, :));
-  %Delta2 = Delta2 .+ (delta_3' * Hidden_layer);
-  
-  Delta1 = Delta1 .+ (delta_2' * X(i, :));
+  % accumulate the gradients within the big delta matrix for all input values / examples (5000 in this case)
+  % X_plus_bias_one(i, :) represents the input values of the i-th example -> this values are fix and will not be changed
+  % Hidden_layer_bias represent the activation values of the hidden layer and will be computed for every input example.
+  Delta1 = Delta1 .+ (delta_2' * X_plus_bias_one(i, :));
   Delta2 = Delta2 .+ (delta_3' * Hidden_layer_bias);
-  
 end;
 
+% Obtain the (unregularized) gradient for the neural network cost function by dividing the accumulated gradients by m!
 Theta1_grad = Delta1 / m;
 Theta2_grad = Delta2 / m;
 
+% Obtain the regularized gradient for the neural network cost function!
 Theta1_grad(:, 2:end) = Theta1_grad(:, 2:end) + ((lambda * Theta1(:, 2:end)) / m);
 Theta2_grad(:, 2:end) = Theta2_grad(:, 2:end) + ((lambda * Theta2(:, 2:end)) / m);
-
-%disp(size(Theta1_grad));
 
 % =========================================================================
 
