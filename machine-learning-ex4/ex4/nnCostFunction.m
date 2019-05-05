@@ -120,6 +120,7 @@ J = (sum(K_sum) / m) + reg_value;
 Delta1 = zeros(hidden_layer_size, input_layer_size+1);
 Delta2 = zeros(num_labels, hidden_layer_size+1);
 
+% switch between voctorized and unvectorized version
 vectorizedVersion = 1;
 
 if(vectorizedVersion == 1)
@@ -130,7 +131,6 @@ if(vectorizedVersion == 1)
   % calculate the activation values for the hidden layer
   z_2 = X_plus_bias_one * Theta1';
   Hidden_layer = sigmoid(z_2); 
-  %disp(size(Hidden_layer));
 
   % add the bias column to the hidden layer
   Hidden_layer_bias = [ones(size(Hidden_layer, 1), 1) Hidden_layer];
@@ -138,7 +138,7 @@ if(vectorizedVersion == 1)
   % calculate the activation values for the output layer
   z_3 = Hidden_layer_bias * Theta2';
   Output_layer = sigmoid(z_3);
-
+  
   % calculete the delta value for the output layer
   delta_3 = Output_layer .- y_temp;
   % delta_3(i, :) = Output_layer - y_temp(i, :);
@@ -190,6 +190,9 @@ Theta1_grad = Delta1 / m;
 Theta2_grad = Delta2 / m;
 
 % Obtain the regularized gradient for the neural network cost function!
+% ATTENTION: this update is just done for j >= 1. Therfore this will
+% not be done for the first column of the matrix with the gradiants! 
+% The first column is used for the bias term!
 Theta1_grad(:, 2:end) = Theta1_grad(:, 2:end) + ((lambda * Theta1(:, 2:end)) / m);
 Theta2_grad(:, 2:end) = Theta2_grad(:, 2:end) + ((lambda * Theta2(:, 2:end)) / m);
 

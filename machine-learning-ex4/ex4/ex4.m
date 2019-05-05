@@ -205,7 +205,7 @@ Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
 Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
                  num_labels, (hidden_layer_size + 1));
 
-fprintf('Program paused. Press enter to continue.\n');
+fprintf('Program paused after training the NN. Press enter to continue.\n');
 pause;
 
 
@@ -217,6 +217,7 @@ pause;
 fprintf('\nVisualizing Neural Network... \n')
 
 displayData(Theta1(:, 2:end));
+%disp(size(Theta1(:, 2:end)));
 
 fprintf('\nProgram paused. Press enter to continue.\n');
 pause;
