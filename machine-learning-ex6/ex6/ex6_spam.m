@@ -70,6 +70,9 @@ load('spamTrain.mat');
 fprintf('\nTraining Linear SVM (Spam Classification)\n')
 fprintf('(this may take 1 to 2 minutes) ...\n')
 
+disp(size(X));
+%fprintf('Size of X: %d\n', size(X));
+
 C = 0.1;
 model = svmTrain(X, y, C, @linearKernel);
 
@@ -125,7 +128,8 @@ pause;
 % Set the file to be read in (change this to spamSample2.txt,
 % emailSample1.txt or emailSample2.txt to see different predictions on
 % different emails types). Try your own emails as well!
-filename = 'spamSample1.txt';
+% filename = 'spamSample2.txt';
+filename = 'emailSample2.txt';
 
 % Read and predict
 file_contents = readFile(filename);
